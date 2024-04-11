@@ -124,6 +124,23 @@ export default class MapGenerator {
 	}
 
 	/**
+	 * Adds an element to the layoutCanvas.
+	 * @param ctx The canvas 2D rendering context.
+	 * @param src The source of the element (e.g., image URL).
+	 * @param x The x-coordinate of the element.
+	 * @param y The y-coordinate of the element.
+	 * @param width The width of the element.
+	 * @param height The height of the element.
+	 */
+	addElementToLayoutCanvas(ctx: CanvasRenderingContext2D, src: string, x: number, y: number, width: number, height: number) {
+		const img = new Image();
+		img.src = src;
+		img.onload = () => {
+		ctx.drawImage(img, x, y, width, height);
+		};
+	}
+
+	/**
 	 * Generate and download Map image
 	 */
 	generate() {
@@ -213,38 +230,76 @@ export default class MapGenerator {
 		}
 
 		renderMap.once('idle', () => {
-			const canvas = renderMap.getCanvas();
-			const fileName = `${this.fileName}.${this_.format}`;
-			switch (this_.format) {
-				case Format.PNG:
-					this_.toPNG(canvas, fileName);
-					break;
-				case Format.JPEG:
-					this_.toJPEG(canvas, fileName);
-					break;
-				case Format.PDF:
-					this_.toPDF(renderMap, fileName);
-					break;
-				case Format.SVG:
-					this_.toSVG(canvas, fileName);
-					break;
-				default:
-					console.error(`Invalid file format: ${this_.format}`);
-					break;
-			}
+			const mapCanvas = renderMap.getCanvas();
 
-			renderMap.remove();
-			hidden.parentNode?.removeChild(hidden);
-			Object.defineProperty(window, 'devicePixelRatio', {
-				get() {
-					return actualPixelRatio;
+			// Create the layoutCanvas and draw the logo image on it
+			const layoutCanvas = document.createElement('canvas');
+			layoutCanvas.width = mapCanvas.width; // Set the width of the layoutCanvas
+			layoutCanvas.height = mapCanvas.height; // Set the height of the layoutCanvas
+			const layoutCtx = layoutCanvas.getContext('2d');
+			const logo = new Image();
+			logo.src = '/images/logo.png';
+			logo.onload = () => {
+				console.log("Logo Onload", logo);
+				const xMin = 10;
+				const yMin = mapCanvas.height - logo.height - 10;
+				layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
+		  
+				// Get the data URL of the layoutCanvas
+				const layoutDataURL = layoutCanvas.toDataURL();
+			  
+				// Create a new canvas and draw the mapCanvas on it
+				const canvas = document.createElement('canvas');
+				canvas.width = mapCanvas.width;
+				canvas.height = mapCanvas.height;
+				const finalCtx = canvas.getContext('2d')!;
+			  
+				// Draw the mapCanvas on the new canvas
+				finalCtx.drawImage(mapCanvas, 0, 0);
+			  
+				// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
+				finalCtx.globalCompositeOperation = 'source-over';
+			  
+				// Draw the layoutCanvas data URL on the new canvas
+				const img = new Image();
+				img.src = layoutDataURL;
+				img.onload = () => {
+					console.log("Addimage", img, finalCtx);
+					finalCtx.drawImage(img, 0, 0);
+		
+					const fileName = `${this.fileName}.${this_.format}`;
+					switch (this_.format) {
+						case Format.PNG:
+							this_.toPNG(canvas, fileName);
+							break;
+						case Format.JPEG:
+							this_.toJPEG(canvas, fileName);
+							break;
+						case Format.PDF:
+							this_.toPDF(renderMap, fileName);
+							break;
+						case Format.SVG:
+							this_.toSVG(canvas, fileName);
+							break;
+						default:
+							console.error(`Invalid file format: ${this_.format}`);
+							break;
+					}
+		
+					renderMap.remove();
+					hidden.parentNode?.removeChild(hidden);
+					Object.defineProperty(window, 'devicePixelRatio', {
+						get() {
+							return actualPixelRatio;
+						}
+					});
+					hidden.remove();
+		
+					// eslint-disable-next-line
+					// @ts-ignore
+					JsLoadingOverlay.hide();
 				}
-			});
-			hidden.remove();
-
-			// eslint-disable-next-line
-			// @ts-ignore
-			JsLoadingOverlay.hide();
+			}
 		});
 	}
 

@@ -33,6 +33,8 @@ export default class MaplibreExportControl implements IControl {
 
 	private exportButton: HTMLButtonElement;
 
+	// public onCanvasLoad?: (ctx: CanvasRenderingContext2D) => void;
+
 	private options: Options = {
 		PageSize: Size.A4 as [number, number],
 		PageOrientation: PageOrientation.Landscape,
@@ -54,7 +56,7 @@ export default class MaplibreExportControl implements IControl {
 			| 'B5'
 			| 'B6'
 		)[],
-		Filename: 'map'
+		Filename: 'map',
 	};
 
 	constructor(options: Options) {
