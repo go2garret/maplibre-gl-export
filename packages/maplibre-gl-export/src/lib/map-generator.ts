@@ -132,12 +132,94 @@ export default class MapGenerator {
 	 * @param width The width of the element.
 	 * @param height The height of the element.
 	 */
-	addElementToLayoutCanvas(ctx: CanvasRenderingContext2D, src: string, x: number, y: number, width: number, height: number) {
-		const img = new Image();
-		img.src = src;
-		img.onload = () => {
-		ctx.drawImage(img, x, y, width, height);
-		};
+	// addElementToLayoutCanvas(ctx: CanvasRenderingContext2D, src: string, x: number, y: number, width: number, height: number) {
+	// 	const img = new Image();
+	// 	img.src = src;
+	// 	img.onload = () => {
+	// 		ctx.drawImage(img, x, y, width, height);
+	// 	};
+	// }
+
+
+	addElementToLayoutCanvas(
+		renderMap: MaplibreMap,
+		layoutCanvas: HTMLCanvasElement,
+		mapCanvas: HTMLCanvasElement,
+		canvas: HTMLCanvasElement,
+		layoutCtx: CanvasRenderingContext2D
+	  ) {
+		// eslint-disable-next-line
+		const this_ = this;
+
+		const logo = new Image();
+		logo.src = '/images/logo.png';
+		logo.onload = () => {
+			const xMin = 10;
+			//const yMin = mapCanvas.height - logo.height - 10;
+			const yMin = 0;
+			layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
+	  
+			// Get the data URL of the layoutCanvas
+			const layoutDataURL = layoutCanvas.toDataURL();
+
+			// Get Final Canvas Context
+			const finalCtx = canvas.getContext('2d')!;
+		  
+			// Draw the mapCanvas on the new canvas
+			finalCtx.drawImage(mapCanvas, 0, 0);
+		  
+			// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
+			finalCtx.globalCompositeOperation = 'source-over';
+		  
+			// Draw the layoutCanvas data URL on the new canvas
+			const img = new Image();
+			img.src = layoutDataURL;
+			img.onload = () => {
+				finalCtx.drawImage(img, 0, 0);
+				this_.exportCanvas(renderMap, canvas)
+			};
+		}
+	}
+
+	exportCanvas(
+		renderMap: MaplibreMap,
+		canvas: HTMLCanvasElement
+	) {
+		const actualPixelRatio: number = window.devicePixelRatio;
+
+		const fileName = `${this.fileName}.${this.format}`;
+		switch (this.format) {
+			case Format.PNG:
+				this.toPNG(canvas, fileName);
+				break;
+			case Format.JPEG:
+				this.toJPEG(canvas, fileName);
+				break;
+			case Format.PDF:
+				//this.toPDF(renderMap, fileName);
+				this.toPDF(renderMap, canvas, fileName);
+				break;
+			case Format.SVG:
+				this.toSVG(canvas, fileName);
+				break;
+			default:
+				console.error(`Invalid file format: ${this.format}`);
+				break;
+		}
+
+		renderMap.remove();
+		const hidden = document.getElementById('hidden-map')!;
+		hidden.parentNode?.removeChild(hidden);
+		Object.defineProperty(window, 'devicePixelRatio', {
+			get() {
+				return actualPixelRatio;
+			}
+		});
+		hidden.remove();
+
+		// eslint-disable-next-line
+		// @ts-ignore
+		JsLoadingOverlay.hide();
 	}
 
 	/**
@@ -168,7 +250,7 @@ export default class MapGenerator {
 		});
 
 		// Calculate pixel ratio
-		const actualPixelRatio: number = window.devicePixelRatio;
+		// const actualPixelRatio: number = window.devicePixelRatio;
 		Object.defineProperty(window, 'devicePixelRatio', {
 			get() {
 				return this_.dpi / 96;
@@ -177,6 +259,7 @@ export default class MapGenerator {
 		// Create map container
 		const hidden = document.createElement('div');
 		hidden.className = 'hidden-map';
+		hidden.id = 'hidden-map';
 		document.body.appendChild(hidden);
 		const container = document.createElement('div');
 		container.style.width = this.toPixels(this.width);
@@ -230,76 +313,23 @@ export default class MapGenerator {
 		}
 
 		renderMap.once('idle', () => {
+			// Create Map Canvas
 			const mapCanvas = renderMap.getCanvas();
 
 			// Create the layoutCanvas and draw the logo image on it
 			const layoutCanvas = document.createElement('canvas');
 			layoutCanvas.width = mapCanvas.width; // Set the width of the layoutCanvas
 			layoutCanvas.height = mapCanvas.height; // Set the height of the layoutCanvas
-			const layoutCtx = layoutCanvas.getContext('2d');
-			const logo = new Image();
-			logo.src = '/images/logo.png';
-			logo.onload = () => {
-				console.log("Logo Onload", logo);
-				const xMin = 10;
-				const yMin = mapCanvas.height - logo.height - 10;
-				layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
-		  
-				// Get the data URL of the layoutCanvas
-				const layoutDataURL = layoutCanvas.toDataURL();
-			  
-				// Create a new canvas and draw the mapCanvas on it
-				const canvas = document.createElement('canvas');
-				canvas.width = mapCanvas.width;
-				canvas.height = mapCanvas.height;
-				const finalCtx = canvas.getContext('2d')!;
-			  
-				// Draw the mapCanvas on the new canvas
-				finalCtx.drawImage(mapCanvas, 0, 0);
-			  
-				// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
-				finalCtx.globalCompositeOperation = 'source-over';
-			  
-				// Draw the layoutCanvas data URL on the new canvas
-				const img = new Image();
-				img.src = layoutDataURL;
-				img.onload = () => {
-					console.log("Addimage", img, finalCtx);
-					finalCtx.drawImage(img, 0, 0);
-		
-					const fileName = `${this.fileName}.${this_.format}`;
-					switch (this_.format) {
-						case Format.PNG:
-							this_.toPNG(canvas, fileName);
-							break;
-						case Format.JPEG:
-							this_.toJPEG(canvas, fileName);
-							break;
-						case Format.PDF:
-							this_.toPDF(renderMap, fileName);
-							break;
-						case Format.SVG:
-							this_.toSVG(canvas, fileName);
-							break;
-						default:
-							console.error(`Invalid file format: ${this_.format}`);
-							break;
-					}
-		
-					renderMap.remove();
-					hidden.parentNode?.removeChild(hidden);
-					Object.defineProperty(window, 'devicePixelRatio', {
-						get() {
-							return actualPixelRatio;
-						}
-					});
-					hidden.remove();
-		
-					// eslint-disable-next-line
-					// @ts-ignore
-					JsLoadingOverlay.hide();
-				}
-			}
+
+			// Create the Final Canvas
+			const canvas = document.createElement('canvas');
+			canvas.width = mapCanvas.width;
+			canvas.height = mapCanvas.height;
+
+			// Create layout context and draw elements on it
+			const layoutCtx = layoutCanvas.getContext('2d')!;
+
+			this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx);
 		});
 	}
 
@@ -335,8 +365,9 @@ export default class MapGenerator {
 	 * @param map Map object
 	 * @param fileName file name
 	 */
-	private toPDF(map: MaplibreMap, fileName: string) {
-		const canvas = map.getCanvas();
+	//private toPDF(map: MaplibreMap, fileName: string) {
+	private toPDF(map: MaplibreMap, canvas: HTMLCanvasElement, fileName: string) {
+		//const canvas = map.getCanvas();
 		const pdf = new jsPDF({
 			orientation: this.width > this.height ? 'l' : 'p',
 			unit: this.unit,
