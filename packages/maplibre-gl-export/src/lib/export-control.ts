@@ -273,6 +273,7 @@ export default class MaplibreExportControl implements IControl {
 		if (
 			this.controlContainer &&
 			!this.controlContainer.contains(event.target as Element) &&
+			!document.querySelector('.maplibregl-export-layout')?.contains(event.target as Element) &&
 			this.exportContainer &&
 			this.exportButton
 		) {
