@@ -30,6 +30,7 @@
 import { jsPDF } from 'jspdf';
 import { Map as MaplibreMap } from 'maplibre-gl';
 import 'js-loading-overlay';
+import html2canvas from 'html2canvas';
 
 export const Format = {
 	JPEG: 'jpg',
@@ -141,7 +142,7 @@ export default class MapGenerator {
 	// }
 
 
-	addElementToLayoutCanvas(
+	async addElementToLayoutCanvas(
 		renderMap: MaplibreMap,
 		layoutCanvas: HTMLCanvasElement,
 		mapCanvas: HTMLCanvasElement,
@@ -152,35 +153,64 @@ export default class MapGenerator {
 		const this_ = this;
 
 		const logo = new Image();
-		logo.src = '/images/logo.png';
-		logo.onload = () => {
-			const xMin = 10;
-			//const yMin = mapCanvas.height - logo.height - 10;
-			const yMin = 0;
-			layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
-	  
-			// Get the data URL of the layoutCanvas
-			const layoutDataURL = layoutCanvas.toDataURL();
+		logo.src = '/images/logo/logo_xs.png';
+		await logo.decode();
+		
+		const xMin = mapCanvas.width - logo.width - 10;
+		const yMin = mapCanvas.height - logo.height - 10;
+		//const yMin = 0;
+		layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
+		
+		// Add title to the canvas
+		await this_.addTitleToCanvas(layoutCtx);
+	
+		// Get the data URL of the layoutCanvas
+		const layoutDataURL = layoutCanvas.toDataURL();
 
-			// Get Final Canvas Context
-			const finalCtx = canvas.getContext('2d')!;
-		  
-			// Draw the mapCanvas on the new canvas
-			finalCtx.drawImage(mapCanvas, 0, 0);
-		  
-			// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
-			finalCtx.globalCompositeOperation = 'source-over';
-		  
-			// Draw the layoutCanvas data URL on the new canvas
-			const img = new Image();
-			img.src = layoutDataURL;
-			img.onload = () => {
-				finalCtx.drawImage(img, 0, 0);
-				this_.exportCanvas(renderMap, canvas)
-			};
-		}
+		// Get Final Canvas Context
+		const finalCtx = canvas.getContext('2d')!;
+		
+		// Draw the mapCanvas on the new canvas
+		finalCtx.drawImage(mapCanvas, 0, 0);
+		
+		// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
+		finalCtx.globalCompositeOperation = 'source-over';
+		
+		// Draw the layoutCanvas data URL on the new canvas
+		const img = new Image();
+		img.src = layoutDataURL;
+		img.onload = () => {
+			finalCtx.drawImage(img, 0, 0);
+			this_.exportCanvas(renderMap, canvas)
+		};
 	}
 
+	// Function to add a title to the canvas
+	async addTitleToCanvas(ctx: CanvasRenderingContext2D) {
+		const titleDiv = document.createElement('div');
+		const title = document.createElement('h1');
+		title.textContent = 'Sample Map';
+		titleDiv.appendChild(title);
+		title.style['font-size'] = '40px';
+		title.style.padding = '2rem';
+		title.style['background-color'] = 'red';
+		
+		titleDiv.style.position = 'absolute';
+		titleDiv.style.top = '10px';
+		titleDiv.style.left = '10px';
+		titleDiv.style.zIndex = '9999'; // Ensure it's on top of the canvas
+		
+		document.body.appendChild(titleDiv);
+
+		console.log("Add Title Element", titleDiv);
+	  
+		return html2canvas(titleDiv).then((canvas: HTMLCanvasElement) => {
+			ctx.drawImage(canvas, 0, 200);
+			document.body.removeChild(titleDiv); // Remove the element after rendering
+			return;
+		});
+	  }
+	
 	exportCanvas(
 		renderMap: MaplibreMap,
 		canvas: HTMLCanvasElement
@@ -196,7 +226,6 @@ export default class MapGenerator {
 				this.toJPEG(canvas, fileName);
 				break;
 			case Format.PDF:
-				//this.toPDF(renderMap, fileName);
 				this.toPDF(renderMap, canvas, fileName);
 				break;
 			case Format.SVG:
@@ -312,7 +341,7 @@ export default class MapGenerator {
 			}
 		}
 
-		renderMap.once('idle', () => {
+		renderMap.once('idle', async () => {
 			// Create Map Canvas
 			const mapCanvas = renderMap.getCanvas();
 
@@ -329,7 +358,7 @@ export default class MapGenerator {
 			// Create layout context and draw elements on it
 			const layoutCtx = layoutCanvas.getContext('2d')!;
 
-			this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx);
+			await this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx);
 		});
 	}
 
@@ -363,9 +392,9 @@ export default class MapGenerator {
 	/**
 	 * Convert Map object to PDF
 	 * @param map Map object
+	 * @param canvas Canvas element
 	 * @param fileName file name
 	 */
-	//private toPDF(map: MaplibreMap, fileName: string) {
 	private toPDF(map: MaplibreMap, canvas: HTMLCanvasElement, fileName: string) {
 		//const canvas = map.getCanvas();
 		const pdf = new jsPDF({

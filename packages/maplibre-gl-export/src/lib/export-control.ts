@@ -13,7 +13,7 @@ type Options = {
 	PrintableArea?: boolean;
 	Local?: languages;
 	AllowedSizes?: ('LETTER' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6')[];
-	Filename?: string;
+	Filename?: string;	
 };
 
 /**
@@ -75,6 +75,24 @@ export default class MaplibreExportControl implements IControl {
 		const lang: languages = this.options.Local ?? 'en';
 		return getTranslation(lang);
 	}
+	
+	/**
+	 * Custom. Todo: replace with optional callback
+	 */
+	public hideLayoutFeatures() {
+		(document.querySelector('.layoutFeatures') as HTMLElement)?.classList.add('hidden');
+		const bottomRightControl = document.querySelector('.maplibregl-ctrl-bottom-right') as HTMLElement;
+		bottomRightControl.style.display = 'none';
+	}
+	
+	/**
+	 * Custom. Todo: replace with optional callback
+	 */
+	public showLayoutFeatures() {
+		document.querySelector('.layoutFeatures')?.classList.remove('hidden');
+		const bottomRightControl = document.querySelector('.maplibregl-ctrl-bottom-right') as HTMLElement;
+		bottomRightControl.style.display = 'flex';
+	}
 
 	public onAdd(map: MaplibreMap): HTMLElement {
 		this.map = map;
@@ -92,6 +110,7 @@ export default class MaplibreExportControl implements IControl {
 			this.exportContainer.style.display = 'block';
 			this.toggleCrosshair(true);
 			this.togglePrintableArea(true);
+			this.hideLayoutFeatures();
 		});
 		document.addEventListener('click', this.onDocumentClick);
 		this.controlContainer.appendChild(this.exportButton);
@@ -147,7 +166,8 @@ export default class MaplibreExportControl implements IControl {
 
 		const generateButton = document.createElement('button');
 		generateButton.type = 'button';
-		generateButton.textContent = this.getTranslation().Generate;
+		//generateButton.textContent = this.getTranslation().Generate;
+		generateButton.textContent = "Export Map";
 		generateButton.classList.add('generate-button');
 		generateButton.addEventListener('click', () => {
 			const pageSize: HTMLSelectElement = <HTMLSelectElement>(
@@ -256,6 +276,7 @@ export default class MaplibreExportControl implements IControl {
 			this.exportButton.style.display = 'block';
 			this.toggleCrosshair(false);
 			this.togglePrintableArea(false);
+			this.showLayoutFeatures();
 		}
 	}
 

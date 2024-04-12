@@ -69,6 +69,7 @@
 		"vite": "^5.1.5"
 	},
 	"dependencies": {
+		"html2canvas": "^1.4.1",
 		"js-loading-overlay": "^1.2.0",
 		"jspdf": "^2.5.1",
 		"maplibre-gl": "^4.1.0"
