@@ -14,6 +14,7 @@ type Options = {
 	Local?: languages;
 	AllowedSizes?: ('LETTER' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6')[];
 	Filename?: string;	
+	onCloseExport?: () => void; 
 };
 
 /**
@@ -57,6 +58,9 @@ export default class MaplibreExportControl implements IControl {
 			| 'B6'
 		)[],
 		Filename: 'map',
+		onCloseExport: () => {
+			//
+		}
 	};
 
 	constructor(options: Options) {
@@ -110,9 +114,9 @@ export default class MaplibreExportControl implements IControl {
 			this.exportContainer.style.display = 'block';
 			this.toggleCrosshair(true);
 			this.togglePrintableArea(true);
-			this.hideLayoutFeatures();
+			this.hideLayoutFeatures();			
 		});
-		document.addEventListener('click', this.onDocumentClick);
+		document.addEventListener('click', this.onDocumentClick.bind(this));
 		this.controlContainer.appendChild(this.exportButton);
 		this.controlContainer.appendChild(this.exportContainer);
 
@@ -248,9 +252,9 @@ export default class MaplibreExportControl implements IControl {
 		) {
 			return;
 		}
-		this.exportButton.removeEventListener('click', this.onDocumentClick);
+		this.exportButton.removeEventListener('click', this.onDocumentClick.bind(this));
 		this.controlContainer.parentNode.removeChild(this.controlContainer);
-		document.removeEventListener('click', this.onDocumentClick);
+		document.removeEventListener('click', this.onDocumentClick.bind(this));
 
 		if (this.crosshair !== undefined) {
 			this.crosshair.destroy();
@@ -277,6 +281,9 @@ export default class MaplibreExportControl implements IControl {
 			this.toggleCrosshair(false);
 			this.togglePrintableArea(false);
 			this.showLayoutFeatures();
+			if (this.options && this.options.onCloseExport) {
+				this.options.onCloseExport();		
+			}			
 		}
 	}
 
