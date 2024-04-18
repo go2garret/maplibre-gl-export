@@ -297,10 +297,11 @@ export default class MapGenerator {
 			border: 4px solid red;
 			box-sizing: content-box;
 			max-width: 50%;
+			width: 3in;
 			min-width: 2in;
 			min-height: 2in;
 		`;
-		layoutSection.style.width = this.toPixels(this.width / 2);
+		// layoutSection.style.width = this.toPixels(this.width / 2);
 		return layoutSection;
 	  }
 	  
