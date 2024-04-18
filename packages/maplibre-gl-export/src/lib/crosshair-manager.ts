@@ -95,6 +95,7 @@ export default class CrosshairManager {
 		aLine.setAttribute('stroke-dasharray', '5,5');
 		aLine.setAttribute('stroke', color);
 		aLine.setAttribute('stroke-width', w);
+		aLine.id = "print-preview-crosshair";
 		return aLine;
 	}
 

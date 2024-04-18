@@ -14,7 +14,7 @@ type Options = {
 	Local?: languages;
 	AllowedSizes?: ('LETTER' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6')[];
 	Filename?: string;	
-	onCloseExport?: () => void; 
+	onCloseExport?: () => void;
 };
 
 /**
@@ -33,6 +33,8 @@ export default class MaplibreExportControl implements IControl {
 	private map?: MaplibreMap;
 
 	private exportButton: HTMLButtonElement;
+
+	public menuIsOpen: boolean;
 
 	// public onCanvasLoad?: (ctx: CanvasRenderingContext2D) => void;
 
@@ -58,9 +60,7 @@ export default class MaplibreExportControl implements IControl {
 			| 'B6'
 		)[],
 		Filename: 'map',
-		onCloseExport: () => {
-			//
-		}
+		onCloseExport: () => {}
 	};
 
 	constructor(options: Options) {
@@ -79,42 +79,30 @@ export default class MaplibreExportControl implements IControl {
 		const lang: languages = this.options.Local ?? 'en';
 		return getTranslation(lang);
 	}
-	
-	/**
-	 * Custom. Todo: replace with optional callback
-	 */
-	public hideLayoutFeatures() {
-		(document.querySelector('.layoutFeatures') as HTMLElement)?.classList.add('hidden');
-		const bottomRightControl = document.querySelector('.maplibregl-ctrl-bottom-right') as HTMLElement;
-		bottomRightControl.style.display = 'none';
-	}
-	
-	/**
-	 * Custom. Todo: replace with optional callback
-	 */
-	public showLayoutFeatures() {
-		document.querySelector('.layoutFeatures')?.classList.remove('hidden');
-		const bottomRightControl = document.querySelector('.maplibregl-ctrl-bottom-right') as HTMLElement;
-		bottomRightControl.style.display = 'flex';
-	}
 
 	public onAdd(map: MaplibreMap): HTMLElement {
 		this.map = map;
 		this.controlContainer = document.createElement('div');
 		this.controlContainer.classList.add('maplibregl-ctrl');
 		this.controlContainer.classList.add('maplibregl-ctrl-group');
+		this.controlContainer.classList.add('maplibregl-ctrl-export-group');		
 		this.exportContainer = document.createElement('div');
 		this.exportContainer.classList.add('maplibregl-export-list');
 		this.exportButton = document.createElement('button');
 		this.exportButton.classList.add('maplibregl-ctrl-icon');
 		this.exportButton.classList.add('maplibregl-export-control');
-		this.exportButton.type = 'button';
+		this.exportButton.type = 'button';		
+		this.menuIsOpen = false;
 		this.exportButton.addEventListener('click', () => {
-			this.exportButton.style.display = 'none';
+			console.log("Click Print, menu open?", this.menuIsOpen);
+			if (this.menuIsOpen) {
+				return;
+			}
+			//this.exportButton.style.display = 'none';
+			this.menuIsOpen = true;
 			this.exportContainer.style.display = 'block';
 			this.toggleCrosshair(true);
-			this.togglePrintableArea(true);
-			this.hideLayoutFeatures();			
+			this.togglePrintableArea(true);	
 		});
 		document.addEventListener('click', this.onDocumentClick.bind(this));
 		this.controlContainer.appendChild(this.exportButton);
@@ -191,6 +179,7 @@ export default class MaplibreExportControl implements IControl {
 			if (orientValue === PageOrientation.Portrait) {
 				pageSizeValue = pageSizeValue.reverse();
 			}
+
 			const mapGenerator = new MapGenerator(
 				map,
 				pageSizeValue,
@@ -265,23 +254,28 @@ export default class MaplibreExportControl implements IControl {
 			this.printableArea.destroy();
 			this.printableArea = undefined;
 		}
-
+		
+		this.menuIsOpen = false;
 		this.map = undefined;
 	}
 
+	/* close export menu on document click */
 	private onDocumentClick(event: MouseEvent): void {
 		if (
 			this.controlContainer &&
 			!this.controlContainer.contains(event.target as Element) &&
+			// Ignore features in the layout
 			!document.querySelector('.maplibregl-export-layout')?.contains(event.target as Element) &&
+			!document.querySelector('.maplibregl-ctrl-top-right ')?.contains(event.target as Element) &&			
 			this.exportContainer &&
 			this.exportButton
 		) {
+			this.menuIsOpen = false;
 			this.exportContainer.style.display = 'none';
-			this.exportButton.style.display = 'block';
+			//this.exportButton.style.display = 'block';
 			this.toggleCrosshair(false);
 			this.togglePrintableArea(false);
-			this.showLayoutFeatures();
+			// this.showLayoutFeatures();
 			if (this.options && this.options.onCloseExport) {
 				this.options.onCloseExport();		
 			}			

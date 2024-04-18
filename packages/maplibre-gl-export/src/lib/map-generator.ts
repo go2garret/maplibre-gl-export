@@ -83,6 +83,10 @@ export const DPI = {
 } as const;
 type DPI = (typeof DPI)[keyof typeof DPI];
 
+// type RenderElements = {
+//     [key: string]: HTMLElement | null;
+// };
+
 export default class MapGenerator {
 	private map: MaplibreMap;
 
@@ -97,6 +101,8 @@ export default class MapGenerator {
 	private unit: Unit;
 
 	private fileName: string;
+
+	// private getRenderElements: (() => RenderElements) | null = null; // Initialize as null
 
 	/**
 	 * Constructor
@@ -141,80 +147,246 @@ export default class MapGenerator {
 	// 	};
 	// }
 
-
 	async addElementToLayoutCanvas(
 		renderMap: MaplibreMap,
 		layoutCanvas: HTMLCanvasElement,
 		mapCanvas: HTMLCanvasElement,
 		canvas: HTMLCanvasElement,
 		layoutCtx: CanvasRenderingContext2D
-	  ) {
+	) {
 		// eslint-disable-next-line
 		const this_ = this;
 
 		const logo = new Image();
 		logo.src = '/images/logo/logo_xs.png';
 		await logo.decode();
-		
-		const xMin = mapCanvas.width - logo.width - 10;
-		const yMin = mapCanvas.height - logo.height - 10;
+
+		const xMin = mapCanvas.width - logo.width;
+		const yMin = mapCanvas.height - logo.height;
 		//const yMin = 0;
 		layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
-		
+
 		// Add title to the canvas
-		await this_.addTitleToCanvas(layoutCtx);
-	
+		await this_.addTitleToCanvas(layoutCtx, mapCanvas.width, mapCanvas.height);
+
 		// Get the data URL of the layoutCanvas
 		const layoutDataURL = layoutCanvas.toDataURL();
 
 		// Get Final Canvas Context
 		const finalCtx = canvas.getContext('2d')!;
-		
+
 		// Draw the mapCanvas on the new canvas
 		finalCtx.drawImage(mapCanvas, 0, 0);
-		
+
 		// Set the globalCompositeOperation to 'source-over' to overlay the layoutCanvas
 		finalCtx.globalCompositeOperation = 'source-over';
-		
+
 		// Draw the layoutCanvas data URL on the new canvas
 		const img = new Image();
 		img.src = layoutDataURL;
 		img.onload = () => {
 			finalCtx.drawImage(img, 0, 0);
-			this_.exportCanvas(renderMap, canvas)
+			this_.exportCanvas(renderMap, canvas);
 		};
 	}
 
 	// Function to add a title to the canvas
-	async addTitleToCanvas(ctx: CanvasRenderingContext2D) {
-		const titleDiv = document.createElement('div');
-		const title = document.createElement('h1');
-		title.textContent = 'Sample Map';
-		titleDiv.appendChild(title);
-		title.style['font-size'] = '40px';
-		title.style.padding = '2rem';
-		title.style['background-color'] = 'red';
-		
-		titleDiv.style.position = 'absolute';
-		titleDiv.style.top = '10px';
-		titleDiv.style.left = '10px';
-		titleDiv.style.zIndex = '9999'; // Ensure it's on top of the canvas
-		
-		document.body.appendChild(titleDiv);
+	/*async addTitleToCanvas(ctx: CanvasRenderingContext2D) {
+		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
 
-		console.log("Add Title Element", titleDiv);
+		console.log("USER OBJECTS", userObjectContainers);
 	  
-		return html2canvas(titleDiv).then((canvas: HTMLCanvasElement) => {
-			ctx.drawImage(canvas, 0, 200);
-			document.body.removeChild(titleDiv); // Remove the element after rendering
-			return;
-		});
+		const addElementToCanvas = async (element: HTMLElement, x: number, y: number) => {
+			if (element instanceof HTMLImageElement) {
+				// Handle the image separately
+				await addImageToCanvas(element, x, y);
+			} else {
+				const canvas = await html2canvas(element, {
+					allowTaint: true,
+					foreignObjectRendering: true,
+					backgroundColor: 'transparent' // Set the canvas background color to transparent
+				});
+				if (canvas.width > 0 && canvas.height > 0) {
+					ctx.drawImage(canvas, x, y);
+				} else {
+					console.error('Failed to render element:', element);
+				}
+			}
+		};
+		
+		const addImageToCanvas = async (img: HTMLImageElement, x: number, y: number) => {
+			return new Promise<void>((resolve) => {
+				const image = new Image();
+				image.crossOrigin = 'anonymous'; // Enable CORS for the image
+				image.src = img.src;
+				image.onload = () => {
+					ctx.drawImage(image, x, y);
+					resolve();
+				};
+				image.onerror = () => {
+					console.error('Failed to render image:', img);
+					resolve();
+				};
+			});
+		};
+	  
+		let currentX = 0;
+		let currentY = 0;
+		const spacing = 20;
+	  
+		for (let i = 0; i < userObjectContainers.length; i++) {
+		  await addElementToCanvas(userObjectContainers[i], currentX, currentY);
+	  
+		  // Update the position for the next element
+		  currentX += userObjectContainers[i].offsetWidth + spacing;
+	  
+		  // If the current element plus the next one would exceed the canvas width, move to the next row
+		  if (currentX + userObjectContainers[i].offsetWidth + spacing > ctx.canvas.width) {
+			currentX = 0;
+			currentY += userObjectContainers[i].offsetHeight + spacing;
+		  }
+		}
+	  }*/
+
+	  getLayoutContainer(position) {
+		const layoutContainer = document.createElement('div');
+		layoutContainer.style.cssText = `
+			background-color: transparent;
+			position: absolute;
+			left: 0;
+			margin: 0;
+			padding: 0;
+			display: block;
+			font-family: "Inter, Arial, Helvetica, sans-serif";
+			font-weight: 400;
+			background-color: transparent;
+			border: none;
+			box-sizing: content-box;
+			justify-content: space-between;
+		`;
+		if (position == 'top') {
+			layoutContainer.style.top = '0';
+			layoutContainer.style.height = this.toPixels(this.height / 2);			
+			layoutContainer.style.boxShadow = 'inset 0 0 5px 3px green';
+			layoutContainer.style.display = 'flex';
+		} else if (position =='bottom') {
+			layoutContainer.style.top = this.toPixels(this.height / 2);
+			layoutContainer.style.height = this.toPixels(this.height / 2);
+			layoutContainer.style.boxShadow = 'inset 0 0 5px 3px yellow';
+			layoutContainer.style.display = 'flex';
+		} else if (position == 'full') {
+			layoutContainer.style.top = '0';
+			layoutContainer.style.height = this.toPixels(this.height);
+			layoutContainer.style.boxShadow = 'inset 0 0 5px 3px purple';
+			layoutContainer.style.display = 'block';
+		}
+		layoutContainer.style.width = this.toPixels(this.width);
+		return layoutContainer;
 	  }
-	
-	exportCanvas(
-		renderMap: MaplibreMap,
-		canvas: HTMLCanvasElement
-	) {
+
+	  getLayoutSection() {
+		const layoutSection = document.createElement('div');
+		layoutSection.style.cssText = `		
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			font-family: "Inter, Arial, Helvetica, sans-serif";
+			font-weight: 400;
+			background-color: transparent;
+			border: 4px solid red;
+			box-sizing: content-box;
+			max-width: 50%;
+			min-width: 2in;
+			min-height: 2in;
+		`;
+		layoutSection.style.width = this.toPixels(this.width / 2);
+		return layoutSection;
+	  }
+	  
+	  async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
+		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
+	  
+		console.log("USER OBJECTS", userObjectContainers);
+
+		const updateInputElements = (element: HTMLElement): HTMLElement => {
+			if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+				const div = document.createElement('div');
+				div.innerHTML = element instanceof HTMLInputElement ? element.value : (element as HTMLTextAreaElement).value;
+				div.style.cssText = element.style.cssText;
+				console.log("Input element style", element.style);
+				// div.style.border = '3px solid red';
+				div.style.display = 'flex';
+				div.style.alignItems = 'center';
+				div.style.minHeight = 'unset';
+				div.style.maxHeight = 'unset';
+				div.style.height = 'unset';
+				div.style.width = '100%';
+				div.style.fontFamily = 'Inter, Arial, Helvetica, sans-serif';
+				div.style.padding = '0';
+				div.style.margin = '0';
+				return div;
+			}
+			return element;
+		};
+		
+
+		const copyHtmlElement = (element: HTMLElement): HTMLElement => {
+			const clone = element.cloneNode(true) as HTMLElement;
+			return updateInputElements(clone);
+		};
+
+		// Create a new container element to hold all userObjectContainers
+		// const  = document.createElement('div');
+		// layoutContainer.style.cssText = `
+		// 	background-color: transparent;
+		// 	position: fixed;
+		// 	overflow: hidden;
+		// 	`;
+	  
+		// Create a new container element to hold all userObjectContainers
+		const layoutContainerMain = this.getLayoutContainer('full');
+		document.body.appendChild(layoutContainerMain);
+		const layoutContainerTop = this.getLayoutContainer('top');
+		const layoutContainerBottom = this.getLayoutContainer('bottom');
+		layoutContainerMain.appendChild(layoutContainerTop);
+		layoutContainerMain.appendChild(layoutContainerBottom);
+		
+		const topLeftSection = this.getLayoutSection();
+		const topRightSection = this.getLayoutSection();
+		const bottomLeftSection = this.getLayoutSection();
+		const bottomRightSection = this.getLayoutSection();
+		layoutContainerTop.appendChild(topLeftSection);
+		layoutContainerTop.appendChild(topRightSection);
+		layoutContainerBottom.appendChild(bottomLeftSection);
+		layoutContainerBottom.appendChild(bottomRightSection);
+
+		// Append all userObjectContainers to the layoutContainer
+		userObjectContainers.forEach(container => {
+        	const newContainer = copyHtmlElement(container);
+			topRightSection.appendChild(newContainer);
+		});
+	  
+		// Render the layoutContainer onto the canvas
+		const canvas = await html2canvas(layoutContainerMain, {
+			allowTaint: true,
+			foreignObjectRendering: true,
+			backgroundColor: "rgba(0,0,0,0)" // Set the canvas background color to transparent
+		});
+		
+		if (canvas.width <= 0 || canvas.height <= 0) {
+			console.error('Failed to render layoutContainer');
+			document.body.removeChild(layoutContainerMain);
+			return;
+		}
+
+		ctx.drawImage(canvas, 0, 0); // Draw the canvas at position (0, 0)
+	  
+		// Remove the layoutContainer from the document
+		document.body.removeChild(layoutContainerMain);
+	}
+
+	exportCanvas(renderMap: MaplibreMap, canvas: HTMLCanvasElement) {
 		const actualPixelRatio: number = window.devicePixelRatio;
 
 		const fileName = `${this.fileName}.${this.format}`;
@@ -249,6 +421,40 @@ export default class MapGenerator {
 		// eslint-disable-next-line
 		// @ts-ignore
 		JsLoadingOverlay.hide();
+		// Clear the loading message
+		const loadingDiv = document.querySelector('.export-loading-text');
+		loadingDiv?.remove();
+	}
+
+	addLoadingMessage() {
+		// Create a new div element
+		const loadingDiv = document.createElement('div');
+
+		// Add content to the div if needed
+		loadingDiv.textContent = 'Exporting map, please wait...';
+
+		// Apply styles using a style object
+		const styles = {
+			position: 'fixed',
+            width: '100%',
+            height: '100%',
+			zIndex: '9999',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.3rem',
+            top: '-40px',
+            left: '0',
+			color: '#ececec'
+		};
+
+		loadingDiv.className = 'export-loading-text';
+
+		// Apply styles to the loadingDiv
+		Object.assign(loadingDiv.style, styles);
+
+		// Append the loadingDiv to the document body
+		document.body.appendChild(loadingDiv);
 	}
 
 	/**
@@ -263,20 +469,22 @@ export default class MapGenerator {
 		// eslint-disable-next-line
 		// @ts-ignore
 		JsLoadingOverlay.show({
-			overlayBackgroundColor: '#5D5959',
-			overlayOpacity: '0.6',
-			spinnerIcon: 'ball-spin',
-			spinnerColor: '#2400FD',
+			overlayBackgroundColor: '#17171a',
+			overlayOpacity: '1',
+			spinnerIcon: 'ball-pulse',
+			spinnerColor: '#ececec',
 			spinnerSize: '2x',
 			overlayIDName: 'overlay',
 			spinnerIDName: 'spinner',
 			offsetX: 0,
 			offsetY: 0,
 			containerID: null,
-			lockScroll: false,
+			lockScroll: true,
 			overlayZIndex: 9998,
 			spinnerZIndex: 9999
 		});
+
+		this.addLoadingMessage();
 
 		// Calculate pixel ratio
 		// const actualPixelRatio: number = window.devicePixelRatio;
@@ -325,17 +533,17 @@ export default class MapGenerator {
 			// @ts-ignore
 			transformRequest: (this.map as unknown)._requestManager._transformRequestFn
 		});
-		
+
 		// Attempt to load images that were loaded in source map using addImage(). This does not load sprite images.
 		// Modification based on https://github.com/watergis/maplibre-gl-export/pull/18
 		const images = (this.map.style.imageManager || {}).images || [];
 		for (const key of Object.keys(images)) {
 			const _image = images[key];
-			
-			if (_image?.data) {				
+
+			if (_image?.data) {
 				try {
 					renderMap.addImage(key, _image?.data);
-				} catch(err) {
+				} catch (err) {
 					console.error(`Error adding image: ${err.message}`);
 				}
 			}
@@ -349,6 +557,7 @@ export default class MapGenerator {
 			const layoutCanvas = document.createElement('canvas');
 			layoutCanvas.width = mapCanvas.width; // Set the width of the layoutCanvas
 			layoutCanvas.height = mapCanvas.height; // Set the height of the layoutCanvas
+			layoutCanvas.style.boxSizing = 'content-box';
 
 			// Create the Final Canvas
 			const canvas = document.createElement('canvas');
@@ -358,7 +567,11 @@ export default class MapGenerator {
 			// Create layout context and draw elements on it
 			const layoutCtx = layoutCanvas.getContext('2d')!;
 
-			await this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx);
+			await this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx)
+			.catch((e: Error) => {
+				// Handle the error here
+				console.error('Error adding element to layout canvas:', e);
+			});
 		});
 	}
 
