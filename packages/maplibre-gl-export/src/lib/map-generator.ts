@@ -287,47 +287,11 @@ export default class MapGenerator {
 
 	getLayoutSection() {
 		const layoutSectionContainer = document.createElement('div');
-		layoutSectionContainer.style.cssText = `	
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			max-width: 50%;
-			width: 3in;
-			min-width: 2in;
-			min-height: 2in;
-			position: absolute;
-			top: 0;
-			left: 0;
-			box-sizing: content-box;
-			border-radius: 12px;
-			overflow: hidden;
-			border: 1px solid rgba(255,255,255,0);
-			border-style: hidden;
-			padding: 8px;
-		`;
+		layoutSectionContainer.className = 'layout-section-container';
 
 		const layoutSection = document.createElement('section');
-		layoutSection.style.cssText = `	
-			position: absolute;
-			top: 0;
-			left: 0;	
-			width: 100%;
-			display: inline-flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			font-family: "Inter, Arial, Helvetica, sans-serif";
-			font-weight: 400;
-			background-color: rgba(255,255,255,1) !important;
-			background: rgba(255,255,255,1) !important;
-			box-sizing: content-box;
-			border-radius: 12px;
-			overflow: hidden;
-			border: 1px solid rgba(255,255,255,1);
-			border-style: hidden;
-		`;
 		layoutSectionContainer.appendChild(layoutSection);
+
 		// layoutSection.style.width = this.toPixels(this.width / 2);
 		return layoutSectionContainer;
 	}
@@ -350,9 +314,10 @@ export default class MapGenerator {
 			div.style.width = '100%';
 			div.style.fontFamily = 'Inter, Arial, Helvetica, sans-serif';
 			div.style.padding = '0';
-			div.style.margin = '0';
+			div.style.margin = '10px';
 			return div;
 		}
+		element.style.margin = '10px';
 		return element;
 	}
 
@@ -390,74 +355,71 @@ export default class MapGenerator {
 		}
 
 		const xMin = totalWidth - canvas.width;
-		//const yMin = mapCanvas.height - logo.height;
-		console.log('Drawing Layout Canvas', canvas, xMin, canvas.width, canvas.height);
-		const yMin = 0;
 		ctx?.drawImage(canvas, xMin, yMin, canvas.width, canvas.height);
 
 		// Remove the layoutContainer from the document
 		document.body.removeChild(topRightSection);
 	}
 
-	async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
-		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
+	// async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
+	// 	const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
 
-		console.log('USER OBJECTS', userObjectContainers);
+	// 	console.log('USER OBJECTS', userObjectContainers);
 
-		const copyHtmlElement = (element: HTMLElement): HTMLElement => {
-			const clone = element.cloneNode(true) as HTMLElement;
-			return this.updateInputElements(clone);
-		};
+	// 	const copyHtmlElement = (element: HTMLElement): HTMLElement => {
+	// 		const clone = element.cloneNode(true) as HTMLElement;
+	// 		return this.updateInputElements(clone);
+	// 	};
 
-		// Create a new container element to hold all userObjectContainers
-		// const  = document.createElement('div');
-		// layoutContainer.style.cssText = `
-		// 	background-color: transparent;
-		// 	position: fixed;
-		// 	overflow: hidden;
-		// 	`;
+	// 	// Create a new container element to hold all userObjectContainers
+	// 	// const  = document.createElement('div');
+	// 	// layoutContainer.style.cssText = `
+	// 	// 	background-color: transparent;
+	// 	// 	position: fixed;
+	// 	// 	overflow: hidden;
+	// 	// 	`;
 
-		// Create a new container element to hold all userObjectContainers
-		const layoutContainerMain = this.getLayoutContainer('full');
-		document.body.appendChild(layoutContainerMain);
-		const layoutContainerTop = this.getLayoutContainer('top');
-		const layoutContainerBottom = this.getLayoutContainer('bottom');
-		layoutContainerMain.appendChild(layoutContainerTop);
-		layoutContainerMain.appendChild(layoutContainerBottom);
+	// 	// Create a new container element to hold all userObjectContainers
+	// 	const layoutContainerMain = this.getLayoutContainer('full');
+	// 	document.body.appendChild(layoutContainerMain);
+	// 	const layoutContainerTop = this.getLayoutContainer('top');
+	// 	const layoutContainerBottom = this.getLayoutContainer('bottom');
+	// 	layoutContainerMain.appendChild(layoutContainerTop);
+	// 	layoutContainerMain.appendChild(layoutContainerBottom);
 
-		const topLeftSection = this.getLayoutSection();
-		const topRightSection = this.getLayoutSection();
-		const bottomLeftSection = this.getLayoutSection();
-		const bottomRightSection = this.getLayoutSection();
-		layoutContainerTop.appendChild(topLeftSection);
-		layoutContainerTop.appendChild(topRightSection);
-		layoutContainerBottom.appendChild(bottomLeftSection);
-		layoutContainerBottom.appendChild(bottomRightSection);
+	// 	const topLeftSection = this.getLayoutSection();
+	// 	const topRightSection = this.getLayoutSection();
+	// 	const bottomLeftSection = this.getLayoutSection();
+	// 	const bottomRightSection = this.getLayoutSection();
+	// 	layoutContainerTop.appendChild(topLeftSection);
+	// 	layoutContainerTop.appendChild(topRightSection);
+	// 	layoutContainerBottom.appendChild(bottomLeftSection);
+	// 	layoutContainerBottom.appendChild(bottomRightSection);
 
-		// Append all userObjectContainers to the layoutContainer
-		userObjectContainers.forEach((container) => {
-			const newContainer = copyHtmlElement(container);
-			topRightSection.appendChild(newContainer);
-		});
+	// 	// Append all userObjectContainers to the layoutContainer
+	// 	userObjectContainers.forEach((container) => {
+	// 		const newContainer = copyHtmlElement(container);
+	// 		topRightSection.appendChild(newContainer);
+	// 	});
 
-		// Render the layoutContainer onto the canvas
-		const canvas = await html2canvas(layoutContainerMain, {
-			allowTaint: true,
-			foreignObjectRendering: true,
-			backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
-		});
+	// 	// Render the layoutContainer onto the canvas
+	// 	const canvas = await html2canvas(layoutContainerMain, {
+	// 		allowTaint: true,
+	// 		foreignObjectRendering: true,
+	// 		backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
+	// 	});
 
-		if (canvas.width <= 0 || canvas.height <= 0) {
-			console.error('Failed to render layoutContainer');
-			document.body.removeChild(layoutContainerMain);
-			return;
-		}
+	// 	if (canvas.width <= 0 || canvas.height <= 0) {
+	// 		console.error('Failed to render layoutContainer');
+	// 		document.body.removeChild(layoutContainerMain);
+	// 		return;
+	// 	}
 
-		ctx.drawImage(canvas, 0, 0); // Draw the canvas at position (0, 0)
+	// 	ctx.drawImage(canvas, 0, 0); // Draw the canvas at position (0, 0)
 
-		// Remove the layoutContainer from the document
-		document.body.removeChild(layoutContainerMain);
-	}
+	// 	// Remove the layoutContainer from the document
+	// 	document.body.removeChild(layoutContainerMain);
+	// }
 
 	exportCanvas(renderMap: MaplibreMap, canvas: HTMLCanvasElement) {
 		const actualPixelRatio: number = window.devicePixelRatio;
