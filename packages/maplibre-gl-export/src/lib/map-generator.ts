@@ -167,7 +167,8 @@ export default class MapGenerator {
 		layoutCtx?.drawImage(logo, xMin, yMin, logo.width, logo.height);
 
 		// Add title to the canvas
-		await this_.addTitleToCanvas(layoutCtx, mapCanvas.width, mapCanvas.height);
+		//await this_.addTitleToCanvas(layoutCtx, mapCanvas.width, mapCanvas.height);
+		await this_.addSectionToCanvas(layoutCtx, mapCanvas.width);
 
 		// Get the data URL of the layoutCanvas
 		const layoutDataURL = layoutCanvas.toDataURL();
@@ -248,7 +249,7 @@ export default class MapGenerator {
 		}
 	  }*/
 
-	  getLayoutContainer(position) {
+	getLayoutContainer(position) {
 		const layoutContainer = document.createElement('div');
 		layoutContainer.style.cssText = `
 			background-color: transparent;
@@ -266,10 +267,10 @@ export default class MapGenerator {
 		`;
 		if (position == 'top') {
 			layoutContainer.style.top = '0';
-			layoutContainer.style.height = this.toPixels(this.height / 2);			
+			layoutContainer.style.height = this.toPixels(this.height / 2);
 			layoutContainer.style.boxShadow = 'inset 0 0 5px 3px green';
 			layoutContainer.style.display = 'flex';
-		} else if (position =='bottom') {
+		} else if (position == 'bottom') {
 			layoutContainer.style.top = this.toPixels(this.height / 2);
 			layoutContainer.style.height = this.toPixels(this.height / 2);
 			layoutContainer.style.boxShadow = 'inset 0 0 5px 3px yellow';
@@ -282,59 +283,130 @@ export default class MapGenerator {
 		}
 		layoutContainer.style.width = this.toPixels(this.width);
 		return layoutContainer;
-	  }
+	}
 
-	  getLayoutSection() {
-		const layoutSection = document.createElement('div');
-		layoutSection.style.cssText = `		
+	getLayoutSection() {
+		const layoutSectionContainer = document.createElement('div');
+		layoutSectionContainer.style.cssText = `	
 			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			max-width: 50%;
+			width: 3in;
+			min-width: 2in;
+			min-height: 2in;
+			position: absolute;
+			top: 0;
+			left: 0;
+			box-sizing: content-box;
+			border-radius: 12px;
+			overflow: hidden;
+			border: 1px solid rgba(255,255,255,0);
+			border-style: hidden;
+			padding: 8px;
+		`;
+
+		const layoutSection = document.createElement('section');
+		layoutSection.style.cssText = `	
+			position: absolute;
+			top: 0;
+			left: 0;	
+			width: 100%;
+			display: inline-flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
 			font-family: "Inter, Arial, Helvetica, sans-serif";
 			font-weight: 400;
-			background-color: transparent;
-			border: 4px solid red;
+			background-color: rgba(255,255,255,1) !important;
+			background: rgba(255,255,255,1) !important;
 			box-sizing: content-box;
-			max-width: 50%;
-			width: 3in;
-			min-width: 2in;
-			min-height: 2in;
+			border-radius: 12px;
+			overflow: hidden;
+			border: 1px solid rgba(255,255,255,1);
+			border-style: hidden;
 		`;
+		layoutSectionContainer.appendChild(layoutSection);
 		// layoutSection.style.width = this.toPixels(this.width / 2);
-		return layoutSection;
-	  }
-	  
-	  async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
-		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
-	  
-		console.log("USER OBJECTS", userObjectContainers);
+		return layoutSectionContainer;
+	}
 
-		const updateInputElements = (element: HTMLElement): HTMLElement => {
-			if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-				const div = document.createElement('div');
-				div.innerHTML = element instanceof HTMLInputElement ? element.value : (element as HTMLTextAreaElement).value;
-				div.style.cssText = element.style.cssText;
-				console.log("Input element style", element.style);
-				// div.style.border = '3px solid red';
-				div.style.display = 'flex';
-				div.style.alignItems = 'center';
-				div.style.minHeight = 'unset';
-				div.style.maxHeight = 'unset';
-				div.style.height = 'unset';
-				div.style.width = '100%';
-				div.style.fontFamily = 'Inter, Arial, Helvetica, sans-serif';
-				div.style.padding = '0';
-				div.style.margin = '0';
-				return div;
-			}
-			return element;
-		};
-		
+	updateInputElements(element: HTMLElement): HTMLElement {
+		if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+			const div = document.createElement('div');
+			div.innerHTML =
+				element instanceof HTMLInputElement
+					? element.value
+					: (element as HTMLTextAreaElement).value;
+			div.style.cssText = element.style.cssText;
+			console.log('Input element style', element.style);
+			// div.style.border = '3px solid red';
+			div.style.display = 'flex';
+			div.style.alignItems = 'center';
+			div.style.minHeight = 'unset';
+			div.style.maxHeight = 'unset';
+			div.style.height = 'unset';
+			div.style.width = '100%';
+			div.style.fontFamily = 'Inter, Arial, Helvetica, sans-serif';
+			div.style.padding = '0';
+			div.style.margin = '0';
+			return div;
+		}
+		return element;
+	}
+
+	async addSectionToCanvas(ctx: CanvasRenderingContext2D, totalWidth) {
+		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
+
+		console.log('TOP RIGHT USER OBJECTS', userObjectContainers);
+		const topRightSection = this.getLayoutSection();
+		document.body.appendChild(topRightSection);
 
 		const copyHtmlElement = (element: HTMLElement): HTMLElement => {
 			const clone = element.cloneNode(true) as HTMLElement;
-			return updateInputElements(clone);
+			return this.updateInputElements(clone);
+		};
+
+		// Append all userObjectContainers to the layoutContainer
+		const section = topRightSection.querySelector('section');
+		if (!section) return;
+		userObjectContainers.forEach((container) => {
+			const newContainer = copyHtmlElement(container);
+			section.appendChild(newContainer);
+		});
+
+		// Render the layoutContainer onto the canvas
+		const canvas = await html2canvas(topRightSection, {
+			allowTaint: true,
+			foreignObjectRendering: true,
+			backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
+		});
+
+		if (canvas.width <= 0 || canvas.height <= 0) {
+			console.error('Failed to render layoutContainer');
+			document.body.removeChild(topRightSection);
+			return;
+		}
+
+		const xMin = totalWidth - canvas.width;
+		//const yMin = mapCanvas.height - logo.height;
+		console.log('Drawing Layout Canvas', canvas, xMin, canvas.width, canvas.height);
+		const yMin = 0;
+		ctx?.drawImage(canvas, xMin, yMin, canvas.width, canvas.height);
+
+		// Remove the layoutContainer from the document
+		document.body.removeChild(topRightSection);
+	}
+
+	async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
+		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
+
+		console.log('USER OBJECTS', userObjectContainers);
+
+		const copyHtmlElement = (element: HTMLElement): HTMLElement => {
+			const clone = element.cloneNode(true) as HTMLElement;
+			return this.updateInputElements(clone);
 		};
 
 		// Create a new container element to hold all userObjectContainers
@@ -344,7 +416,7 @@ export default class MapGenerator {
 		// 	position: fixed;
 		// 	overflow: hidden;
 		// 	`;
-	  
+
 		// Create a new container element to hold all userObjectContainers
 		const layoutContainerMain = this.getLayoutContainer('full');
 		document.body.appendChild(layoutContainerMain);
@@ -352,7 +424,7 @@ export default class MapGenerator {
 		const layoutContainerBottom = this.getLayoutContainer('bottom');
 		layoutContainerMain.appendChild(layoutContainerTop);
 		layoutContainerMain.appendChild(layoutContainerBottom);
-		
+
 		const topLeftSection = this.getLayoutSection();
 		const topRightSection = this.getLayoutSection();
 		const bottomLeftSection = this.getLayoutSection();
@@ -363,18 +435,18 @@ export default class MapGenerator {
 		layoutContainerBottom.appendChild(bottomRightSection);
 
 		// Append all userObjectContainers to the layoutContainer
-		userObjectContainers.forEach(container => {
-        	const newContainer = copyHtmlElement(container);
+		userObjectContainers.forEach((container) => {
+			const newContainer = copyHtmlElement(container);
 			topRightSection.appendChild(newContainer);
 		});
-	  
+
 		// Render the layoutContainer onto the canvas
 		const canvas = await html2canvas(layoutContainerMain, {
 			allowTaint: true,
 			foreignObjectRendering: true,
-			backgroundColor: "rgba(0,0,0,0)" // Set the canvas background color to transparent
+			backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
 		});
-		
+
 		if (canvas.width <= 0 || canvas.height <= 0) {
 			console.error('Failed to render layoutContainer');
 			document.body.removeChild(layoutContainerMain);
@@ -382,7 +454,7 @@ export default class MapGenerator {
 		}
 
 		ctx.drawImage(canvas, 0, 0); // Draw the canvas at position (0, 0)
-	  
+
 		// Remove the layoutContainer from the document
 		document.body.removeChild(layoutContainerMain);
 	}
@@ -437,15 +509,15 @@ export default class MapGenerator {
 		// Apply styles using a style object
 		const styles = {
 			position: 'fixed',
-            width: '100%',
-            height: '100%',
+			width: '100%',
+			height: '100%',
 			zIndex: '9999',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.3rem',
-            top: '-40px',
-            left: '0',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center',
+			fontSize: '1.3rem',
+			top: '-40px',
+			left: '0',
 			color: '#ececec'
 		};
 
@@ -568,8 +640,13 @@ export default class MapGenerator {
 			// Create layout context and draw elements on it
 			const layoutCtx = layoutCanvas.getContext('2d')!;
 
-			await this.addElementToLayoutCanvas(renderMap, layoutCanvas, mapCanvas, canvas, layoutCtx)
-			.catch((e: Error) => {
+			await this.addElementToLayoutCanvas(
+				renderMap,
+				layoutCanvas,
+				mapCanvas,
+				canvas,
+				layoutCtx
+			).catch((e: Error) => {
 				// Handle the error here
 				console.error('Error adding element to layout canvas:', e);
 			});
