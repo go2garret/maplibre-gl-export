@@ -102,6 +102,11 @@ export default class MapGenerator {
 
 	private fileName: string;
 
+	private layoutElements: object;
+
+	private titleBlockOptions: object;
+
+
 	// private getRenderElements: (() => RenderElements) | null = null; // Initialize as null
 
 	/**
@@ -119,7 +124,9 @@ export default class MapGenerator {
 		dpi = 300,
 		format: string = Format.PNG.toString(),
 		unit: Unit = Unit.mm,
-		fileName = 'map'
+		fileName = 'map',
+		layoutElements = {},
+		titleBlockOptions = {}
 	) {
 		this.map = map;
 		this.width = size[0];
@@ -128,6 +135,8 @@ export default class MapGenerator {
 		this.format = format;
 		this.unit = unit;
 		this.fileName = fileName;
+		this.layoutElements = layoutElements;
+		this.titleBlockOptions = titleBlockOptions;
 	}
 
 	/**
@@ -158,7 +167,7 @@ export default class MapGenerator {
 		const this_ = this;
 
 		const logo = new Image();
-		logo.src = '/images/logo/logo_xs.png';
+		logo.src = '/images/logo/newlogo.png';
 		await logo.decode();
 
 		const xMin = mapCanvas.width - logo.width;
@@ -168,7 +177,12 @@ export default class MapGenerator {
 
 		// Add title to the canvas
 		//await this_.addTitleToCanvas(layoutCtx, mapCanvas.width, mapCanvas.height);
-		await this_.addSectionToCanvas(layoutCtx, mapCanvas.width);
+		console.log("SECTIONS", Object.keys(this.layoutElements));
+		const keys = Object.keys(this.layoutElements);
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i];
+			await this_.addSectionToCanvas(layoutCtx, mapCanvas.width, mapCanvas.height, key, this.layoutElements[key]);
+		}
 
 		// Get the data URL of the layoutCanvas
 		const layoutDataURL = layoutCanvas.toDataURL();
@@ -196,7 +210,7 @@ export default class MapGenerator {
 		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
 
 		console.log("USER OBJECTS", userObjectContainers);
-	  
+
 		const addElementToCanvas = async (element: HTMLElement, x: number, y: number) => {
 			if (element instanceof HTMLImageElement) {
 				// Handle the image separately
@@ -214,7 +228,7 @@ export default class MapGenerator {
 				}
 			}
 		};
-		
+
 		const addImageToCanvas = async (img: HTMLImageElement, x: number, y: number) => {
 			return new Promise<void>((resolve) => {
 				const image = new Image();
@@ -230,17 +244,17 @@ export default class MapGenerator {
 				};
 			});
 		};
-	  
+
 		let currentX = 0;
 		let currentY = 0;
 		const spacing = 20;
-	  
+
 		for (let i = 0; i < userObjectContainers.length; i++) {
 		  await addElementToCanvas(userObjectContainers[i], currentX, currentY);
-	  
+
 		  // Update the position for the next element
 		  currentX += userObjectContainers[i].offsetWidth + spacing;
-	  
+
 		  // If the current element plus the next one would exceed the canvas width, move to the next row
 		  if (currentX + userObjectContainers[i].offsetWidth + spacing > ctx.canvas.width) {
 			currentX = 0;
@@ -285,9 +299,9 @@ export default class MapGenerator {
 		return layoutContainer;
 	}
 
-	getLayoutSection() {
+	getLayoutSection(position) {
 		const layoutSectionContainer = document.createElement('div');
-		layoutSectionContainer.className = 'layout-section-container';
+		layoutSectionContainer.className = `layout-section-container ${position}`;
 
 		const layoutSection = document.createElement('section');
 		layoutSectionContainer.appendChild(layoutSection);
@@ -306,59 +320,121 @@ export default class MapGenerator {
 			div.style.cssText = element.style.cssText;
 			console.log('Input element style', element.style);
 			// div.style.border = '3px solid red';
-			div.style.display = 'flex';
-			div.style.alignItems = 'center';
-			div.style.minHeight = 'unset';
-			div.style.maxHeight = 'unset';
+			div.style.display = 'block';
+			// div.style.alignItems = 'center';
+			// div.style.minHeight = 'unset';
+			// div.style.maxHeight = 'unset';
 			div.style.height = 'unset';
+			// div.style.lineHeight = 'auto';
 			div.style.width = '100%';
 			div.style.fontFamily = 'Inter, Arial, Helvetica, sans-serif';
 			div.style.padding = '0';
-			div.style.margin = '10px';
+			div.style.margin = '2px 10px';
+			div.style.background = 'transparent';
+			// div.style.border = "2px solid red";
+			div.style.overflow = "visible";
+			console.log('Updated element style', div.style);
 			return div;
 		}
-		element.style.margin = '10px';
+		element.style.margin = '2px 10px';
 		return element;
 	}
 
-	async addSectionToCanvas(ctx: CanvasRenderingContext2D, totalWidth) {
-		const userObjectContainers = document.querySelectorAll<HTMLElement>('.printer-layout-element');
-
-		console.log('TOP RIGHT USER OBJECTS', userObjectContainers);
-		const topRightSection = this.getLayoutSection();
-		document.body.appendChild(topRightSection);
-
-		const copyHtmlElement = (element: HTMLElement): HTMLElement => {
-			const clone = element.cloneNode(true) as HTMLElement;
-			return this.updateInputElements(clone);
-		};
-
-		// Append all userObjectContainers to the layoutContainer
-		const section = topRightSection.querySelector('section');
-		if (!section) return;
-		userObjectContainers.forEach((container) => {
-			const newContainer = copyHtmlElement(container);
-			section.appendChild(newContainer);
-		});
-
-		// Render the layoutContainer onto the canvas
-		const canvas = await html2canvas(topRightSection, {
-			allowTaint: true,
-			foreignObjectRendering: true,
-			backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
-		});
-
-		if (canvas.width <= 0 || canvas.height <= 0) {
-			console.error('Failed to render layoutContainer');
-			document.body.removeChild(topRightSection);
+	async addSectionToCanvas(ctx: CanvasRenderingContext2D, totalWidth, totalHeight, targetSection, elements) {
+		if (elements.length == 0) {
 			return;
 		}
+		for (let i = 0; i <= elements.length; i++) {
+			const element = elements[i];
+			if (!element || element == undefined) return;
 
-		const xMin = totalWidth - canvas.width;
-		ctx?.drawImage(canvas, xMin, yMin, canvas.width, canvas.height);
+			const userObjectContainers = document.querySelectorAll<HTMLElement>(element);
+			if (!userObjectContainers || userObjectContainers.length == 0) return;
 
-		// Remove the layoutContainer from the document
-		document.body.removeChild(topRightSection);
+			console.log(targetSection + ' USER OBJECTS--->', userObjectContainers, this.layoutElements, targetSection , elements);
+			const newSectionContainer = this.getLayoutSection(targetSection);
+			document.body.appendChild(newSectionContainer);
+
+			const copyHtmlElement = (element: HTMLElement): HTMLElement => {
+				const clone = element.cloneNode(true) as HTMLElement;
+				// clone.style.outline = "3px solid teal";				
+				// clone.style.minHeight = 'unset';
+				// clone.style.maxHeight = 'unset';
+				// clone.style.height = 'auto';
+				// clone.style.lineHeight = 'auto';
+				return this.updateInputElements(clone);
+			};
+
+			// Append all userObjectContainers to the layoutContainer
+			const section = newSectionContainer.querySelector('section');
+			if (!section) return;
+			if (this.titleBlockOptions && this.titleBlockOptions[targetSection]) {
+				//console.log("SET STYLE", this.titleBlockOptions)
+				section.style.background = this.titleBlockOptions[targetSection]?.background;
+				section.style.borderRadius = '12px';
+				// section.style.border = '2px solid blue';
+			}
+			userObjectContainers.forEach((container) => {
+				const newContainer = copyHtmlElement(container);
+
+				// styles for image containers
+				if (newContainer.querySelector('img')) {
+					console.log("**********IS IMAGE**********", newContainer)
+					newContainer.style.boxSizing = 'border-box';
+					section.appendChild(newContainer);
+				}
+				// styles for images
+				else if (container instanceof HTMLImageElement) {
+					console.log("**********IS IMAGE**********", newContainer)
+					newContainer.style.boxSizing = 'border-box';
+					section.appendChild(newContainer);
+				} 
+				// styles for other elements
+				else {
+					console.log("**********IS OTHER ELEMENT**********", newContainer)
+					newContainer.style.borderRadius = '12px';
+					newContainer.style.overflow = 'hidden';
+					newContainer.style.border = '3px solid rgba(255,255,255,0)';
+					newContainer.style.boxSizing = 'border-box';
+					section.appendChild(newContainer);
+				}
+			});
+
+			// Render the layoutContainer onto the canvas
+			const canvas = await html2canvas(newSectionContainer, {
+				allowTaint: true,
+				foreignObjectRendering: true,
+				backgroundColor: 'rgba(0,0,0,0)' // Set the canvas background color to transparent
+			});
+
+			if (canvas.width <= 0 || canvas.height <= 0) {
+				console.error('Failed to render layoutContainer');
+				document.body.removeChild(newSectionContainer);
+				return;
+			}
+
+			const padding = 20;
+			const hackOffset = 18;
+			let xMin = padding - hackOffset;
+			let yMin = padding - hackOffset;
+			if (targetSection == 'topRight') {
+				xMin = totalWidth - canvas.width - padding;
+				yMin = padding - hackOffset;
+			} else if (targetSection == 'bottomLeft') {
+				xMin = padding - hackOffset;
+				yMin = totalHeight - canvas.height - padding;
+			} else if (targetSection == 'bottomRight') {
+				xMin = totalWidth - canvas.width;
+				yMin = totalHeight - canvas.height;
+			} else {
+				console.log("Draw Top LEFT", canvas.width)
+			}
+
+			ctx?.drawImage(canvas, xMin, yMin, canvas.width, canvas.height);
+
+			// Remove the layoutContainer from the document
+			document.body.removeChild(newSectionContainer);
+		};
 	}
 
 	// async addTitleToCanvas(ctx: CanvasRenderingContext2D, width, height) {
@@ -691,16 +767,16 @@ export default class MapGenerator {
 		const pxHeight = Number(this.toPixels(this.height, this.dpi).replace('px', ''));
 
 		const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" 
-      xmlns:xlink="http://www.w3.org/1999/xlink" 
-      version="1.1" 
-      width="${pxWidth}" 
-      height="${pxHeight}" 
-      viewBox="0 0 ${pxWidth} ${pxHeight}" 
-      xml:space="preserve">
-        <image style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;"  
-      xlink:href="${uri}" width="${pxWidth}" height="${pxHeight}"></image>
-    </svg>`;
+	<svg xmlns="http://www.w3.org/2000/svg"
+	  xmlns:xlink="http://www.w3.org/1999/xlink"
+	  version="1.1"
+	  width="${pxWidth}"
+	  height="${pxHeight}"
+	  viewBox="0 0 ${pxWidth} ${pxHeight}"
+	  xml:space="preserve">
+		<image style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;"
+	  xlink:href="${uri}" width="${pxWidth}" height="${pxHeight}"></image>
+	</svg>`;
 
 		const a = document.createElement('a');
 		a.href = `data:application/xml,${encodeURIComponent(svg)}`;

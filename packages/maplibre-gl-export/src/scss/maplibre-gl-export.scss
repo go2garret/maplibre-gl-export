@@ -48,8 +48,6 @@
 .layout-section-container {	
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
 	max-width: 50%;
 	width: 3in;
 	min-width: 2in;
@@ -64,7 +62,28 @@
 	border-radius: 12px;
 	border: 3px solid rgba(255,255,255,0);
 
-	section {		
+	&.topLeft {		
+		align-items: flex-start;
+		justify-content: flex-start;
+	}
+	
+	&.topRight {		
+		align-items: flex-end;
+		justify-content: flex-start;
+	}
+	
+	&.bottomLeft {		
+		align-items: flex-start;
+		justify-content: flex-end;
+	}
+	
+	&.bottomRight {		
+		align-items: flex-end;
+		justify-content: flex-end;
+	}
+
+	section {	
+		padding: 12px 8px;	
 		width: 100%;
 		display: inline-flex;
 		flex-direction: column;
@@ -72,11 +91,89 @@
 		justify-content: center;
 		font-family: "Inter, Arial, Helvetica, sans-serif";
 		font-weight: 400;
-		background-color: rgba(255,255,255,1) !important;
-		background: rgba(255,255,255,1) !important;
-		box-sizing: content-box;
-		border-radius: 12px;
-		overflow: hidden;
-		border: 3px solid rgba(255,255,255,0);
+		box-sizing: border-box;
+		//border-radius: 12px;
+		//overflow: hidden;
+		//border: 3px solid rgba(255,255,255,0);
+		//background-color: rgba(255,255,255,1) !important;
+		//background: rgba(255,255,255,1) !important;
+
+		img {
+
+		}
+
+		ul {
+			list-style-type: none;
+			padding: 0;
+			width: 100%;
+	
+			li::before {
+				content: "\f111";
+				font-family: 'fontawesome';
+				color: #444647;
+				display: inline-block;
+				width: 1em;
+				font-size: 1rem;
+				font-weight: 800;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+	
+			&.ul-circle {
+				li::before {
+					content: "\f111";
+					font-family: 'fontawesome';
+					font-size: 0.6rem;
+					font-weight: 400;
+				}
+			}
+	
+			&.ul-square {
+				li::before {
+					content: "\f0c8";
+					font-family: 'fontawesome';
+					font-size: 0.6rem;
+				}
+			}
+	
+			&.ul-check {
+				li::before {
+					content: "\f14a";
+					font-family: 'fontawesome';
+				}
+			}
+		}
+	
+		li {
+			font-family: "Inter, Arial, Helvetica, sans-serif";
+			box-sizing: border-box;
+			position: relative;
+			width: 100%;
+			border-color: transparent;
+			@apply rounded-md cursor-pointer focus:border-gray-300 hover:bg-slate-100 flex items-center justify-start mb-1;
+	
+			> div {				
+				font-family: "Inter, Arial, Helvetica, sans-serif";
+			}
+			
+			input {
+				all: unset;
+				width: calc(100% - 50px);
+				flex-grow: 1;
+				background: transparent;
+				background-color: transparent;
+			}
+	
+			button {
+				display: none;
+			}
+	
+			&::before {
+				min-width: 24px; 
+				//display: block;
+				//position: absolute;
+			}
+		}
 	}
 }

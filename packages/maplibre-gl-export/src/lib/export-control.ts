@@ -15,6 +15,8 @@ type Options = {
 	AllowedSizes?: ('LETTER' | 'A2' | 'A3' | 'A4' | 'A5' | 'A6' | 'B2' | 'B3' | 'B4' | 'B5' | 'B6')[];
 	Filename?: string;	
 	onCloseExport?: () => void;
+	layoutElements?: object;
+	titleBlockOptions?: object;
 };
 
 /**
@@ -60,7 +62,9 @@ export default class MaplibreExportControl implements IControl {
 			| 'B6'
 		)[],
 		Filename: 'map',
-		onCloseExport: () => {}
+		onCloseExport: () => {},
+		layoutElements: {},
+		titleBlockOptions: {}
 	};
 
 	constructor(options: Options) {
@@ -186,7 +190,9 @@ export default class MaplibreExportControl implements IControl {
 				Number(dpiType.value),
 				formatType.value,
 				Unit.mm,
-				this.options.Filename
+				this.options.Filename,
+				this.options.layoutElements,
+				this.options.titleBlockOptions
 			);
 			mapGenerator.generate();
 		});
