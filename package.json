@@ -1,6 +1,7 @@
 {
   "name": "maplibre-gl-export",
   "version": "1.0.0",
+	"module": "dist/maplibre-gl-export.es.js",
   "description": "This repository to manage plugin of maplibre-gl-export.",
   "scripts": {
     "lint": "pnpm -r lint",
@@ -10,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/watergis/maplibre-gl-export.git"
+    "url": "git+https://github.com/go2garret/maplibre-gl-export.git"
   },
   "keywords": [],
   "author": "Jin IGARASHI",
