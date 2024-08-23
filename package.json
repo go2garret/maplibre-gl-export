@@ -1,6 +1,8 @@
 {
   "name": "maplibre-gl-export",
   "version": "1.0.0",
+	"main": "dist/maplibre-gl-export.umd.js",
+	"types": "./dist/types/index.d.ts",
 	"module": "dist/maplibre-gl-export.es.js",
   "description": "This repository to manage plugin of maplibre-gl-export.",
   "scripts": {
