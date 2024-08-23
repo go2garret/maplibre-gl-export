@@ -197,7 +197,7 @@ export default class MaplibreExportControl implements IControl {
 		return this.controlContainer;
 	}
 
-	protected generateMap(
+	public generateMap(
 		map: MaplibreMap | MapboxMap,
 		size: SizeType,
 		dpi: DPIType,
