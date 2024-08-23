@@ -1,5 +1,5 @@
 {
-  "name": "@watergis/maplibre-gl-export",
+  "name": "maplibre-gl-export",
   "version": "1.0.0",
   "description": "This repository to manage plugin of maplibre-gl-export.",
   "scripts": {
