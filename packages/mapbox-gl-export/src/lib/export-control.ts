@@ -23,7 +23,7 @@ export default class MapboxExportControl extends MaplibreExportControl implement
 		this.accessToken = options.accessToken;
 	}
 
-	protected generateMap(
+	public generateMap(
 		map: MapboxMap,
 		size: SizeType,
 		dpi: DPIType,
