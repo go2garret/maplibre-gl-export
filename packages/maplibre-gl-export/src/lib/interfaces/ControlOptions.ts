@@ -26,4 +26,5 @@ export interface ControlOptions {
 	markerCirclePaint?: CirclePaint;
 	attributionOptions?: AttributionOptions;
 	northIconOptions?: NorthIconOptions;
+	autoClose: boolean;
 }

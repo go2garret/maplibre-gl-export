@@ -65,7 +65,8 @@ export default class MaplibreExportControl implements IControl {
 		Filename: 'map',
 		markerCirclePaint: defaultMarkerCirclePaint,
 		attributionOptions: defaultAttributionOptions,
-		northIconOptions: defaultNorthIconOptions
+		northIconOptions: defaultNorthIconOptions,
+		autoClose: true
 	};
 
 	protected MAPLIB_CSS_PREFIX: string = 'maplibregl';
@@ -285,7 +286,7 @@ export default class MaplibreExportControl implements IControl {
 	private onDocumentClick(event: MouseEvent): void {
 		if (
 			this.controlContainer &&
-			!this.controlContainer.contains(event.target as Element) &&
+			(this.options.autoClose && !this.controlContainer.contains(event.target as Element)) &&
 			this.exportContainer &&
 			this.exportButton
 		) {
@@ -296,7 +297,7 @@ export default class MaplibreExportControl implements IControl {
 		}
 	}
 
-	private toggleCrosshair(state: boolean) {
+	public toggleCrosshair(state: boolean) {
 		if (this.options.Crosshair === true) {
 			if (state === false) {
 				if (this.crosshair !== undefined) {
@@ -304,13 +305,15 @@ export default class MaplibreExportControl implements IControl {
 					this.crosshair = undefined;
 				}
 			} else {
-				this.crosshair = new CrosshairManager(this.map);
-				this.crosshair.create();
+				if (this.crosshair === undefined) {
+					this.crosshair = new CrosshairManager(this.map);
+					this.crosshair.create();
+				}
 			}
 		}
 	}
 
-	private togglePrintableArea(state: boolean) {
+	public togglePrintableArea(state: boolean) {
 		if (this.options.PrintableArea === true) {
 			if (state === false) {
 				if (this.printableArea !== undefined) {
@@ -318,8 +321,10 @@ export default class MaplibreExportControl implements IControl {
 					this.printableArea = undefined;
 				}
 			} else {
-				this.printableArea = new PrintableAreaManager(this.map);
-				this.updatePrintableArea();
+				if (this.printableArea === undefined) {
+					this.printableArea = new PrintableAreaManager(this.map);
+					this.updatePrintableArea();
+				}
 			}
 		}
 	}
