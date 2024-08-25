@@ -4,6 +4,7 @@ import { DPIType, Format, FormatType, Size, SizeType, Unit, UnitType } from './i
 import {
 	MapGeneratorBase,
 	defaultAttributionOptions,
+	defaultExportLayoutOptions,
 	defaultMarkerCirclePaint,
 	defaultNorthIconOptions
 } from './map-generator-base';
@@ -27,7 +28,8 @@ export default class MapGenerator extends MapGeneratorBase {
 		fileName = 'map',
 		markerCirclePaint = defaultMarkerCirclePaint,
 		attributionOptions = defaultAttributionOptions,
-		northIconOptions = defaultNorthIconOptions
+		northIconOptions = defaultNorthIconOptions,
+		exportLayoutOptions = defaultExportLayoutOptions
 	) {
 		super(
 			map,
@@ -40,7 +42,8 @@ export default class MapGenerator extends MapGeneratorBase {
 			markerCirclePaint,
 			'maplibregl-ctrl-attrib-inner',
 			attributionOptions,
-			northIconOptions
+			northIconOptions,
+			exportLayoutOptions
 		);
 	}
 

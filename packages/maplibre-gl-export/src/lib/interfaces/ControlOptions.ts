@@ -4,6 +4,7 @@ import { Language } from './Language';
 import { PageOrientationType } from './PageOrientation';
 import { SizeType } from './Size';
 import { AttributionOptions } from './AttributionStyle';
+import { ExportLayoutOptions } from './ExportLayoutOptions';
 
 export interface NorthIconOptions {
 	image?: string;
@@ -26,5 +27,6 @@ export interface ControlOptions {
 	markerCirclePaint?: CirclePaint;
 	attributionOptions?: AttributionOptions;
 	northIconOptions?: NorthIconOptions;
+	exportLayoutOptions?: ExportLayoutOptions;
 	autoClose: boolean;
 }

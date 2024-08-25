@@ -2,6 +2,7 @@ import { ControlPosition, IControl, Map as MaplibreMap } from 'maplibre-gl';
 import { Map as MapboxMap } from 'mapbox-gl';
 import CrosshairManager from './crosshair-manager';
 import PrintableAreaManager from './printable-area-manager';
+import PrintableAreaRuler from './printable-area-ruler';
 import { getTranslation } from './local';
 import MapGenerator from './map-generator';
 import {
@@ -16,12 +17,14 @@ import {
 	DPI,
 	DPIType,
 	UnitType,
-	type Language
+	type Language,
+	ExportLayoutOptions
 } from './interfaces';
 import {
 	defaultAttributionOptions,
 	defaultMarkerCirclePaint,
-	defaultNorthIconOptions
+	defaultNorthIconOptions,
+	defaultExportLayoutOptions
 } from './map-generator-base';
 
 /**
@@ -66,6 +69,7 @@ export default class MaplibreExportControl implements IControl {
 		markerCirclePaint: defaultMarkerCirclePaint,
 		attributionOptions: defaultAttributionOptions,
 		northIconOptions: defaultNorthIconOptions,
+		exportLayoutOptions: defaultExportLayoutOptions,
 		autoClose: true
 	};
 
@@ -78,6 +82,7 @@ export default class MaplibreExportControl implements IControl {
 				options.attributionOptions
 			);
 			options.northIconOptions = Object.assign(defaultNorthIconOptions, options.northIconOptions);
+			options.exportLayoutOptions = Object.assign(defaultExportLayoutOptions,	options.exportLayoutOptions);
 			this.options = Object.assign(this.options, options);
 		}
 		this.onDocumentClick = this.onDocumentClick.bind(this);
@@ -198,7 +203,7 @@ export default class MaplibreExportControl implements IControl {
 		return this.controlContainer;
 	}
 
-	public generateMap(
+	protected generateMap(
 		map: MaplibreMap | MapboxMap,
 		size: SizeType,
 		dpi: DPIType,
@@ -215,7 +220,8 @@ export default class MaplibreExportControl implements IControl {
 			filename,
 			this.options.markerCirclePaint,
 			this.options.attributionOptions,
-			this.options.northIconOptions
+			this.options.northIconOptions,
+			this.options.exportLayoutOptions
 		);
 		mapGenerator.generate();
 	}
@@ -297,7 +303,7 @@ export default class MaplibreExportControl implements IControl {
 		}
 	}
 
-	public toggleCrosshair(state: boolean) {
+	protected toggleCrosshair(state: boolean) {
 		if (this.options.Crosshair === true) {
 			if (state === false) {
 				if (this.crosshair !== undefined) {
@@ -306,14 +312,14 @@ export default class MaplibreExportControl implements IControl {
 				}
 			} else {
 				if (this.crosshair === undefined) {
-					this.crosshair = new CrosshairManager(this.map);
+					this.crosshair = new CrosshairManager(this.map, (this.options.exportLayoutOptions as ExportLayoutOptions));
 					this.crosshair.create();
 				}
 			}
 		}
 	}
 
-	public togglePrintableArea(state: boolean) {
+	protected togglePrintableArea(state: boolean) {
 		if (this.options.PrintableArea === true) {
 			if (state === false) {
 				if (this.printableArea !== undefined) {
@@ -322,14 +328,19 @@ export default class MaplibreExportControl implements IControl {
 				}
 			} else {
 				if (this.printableArea === undefined) {
-					this.printableArea = new PrintableAreaManager(this.map);
+					if (this.options.exportLayoutOptions?.showRuler) {
+						this.printableArea = new PrintableAreaRuler(this.map, this.options.exportLayoutOptions);
+					} else {
+						this.printableArea = new PrintableAreaManager(this.map, (this.options.exportLayoutOptions as ExportLayoutOptions));
+					}
+					
 					this.updatePrintableArea();
 				}
 			}
 		}
 	}
 
-	private updatePrintableArea() {
+	protected updatePrintableArea() {
 		if (this.printableArea === undefined) {
 			return;
 		}

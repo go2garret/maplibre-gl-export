@@ -1,27 +1,30 @@
 import { type Map as MaplibreMap } from 'maplibre-gl';
 import { type Map as MapboxMap } from 'mapbox-gl';
-import { Unit } from './interfaces';
+import { ExportLayoutOptions, Unit } from './interfaces';
 
 export default class PrintableAreaManager {
-	private map: MaplibreMap | MapboxMap | undefined;
+	protected map: MaplibreMap | MapboxMap | undefined;
 
-	private width: number;
+	protected width: number;
 
-	private height: number;
+	protected height: number;
 
-	private unit: string;
+	protected unit: string;
 
-	private svgCanvas: SVGElement | undefined;
+	protected svgCanvas: SVGElement | undefined;
 
-	private svgPath: SVGElement | undefined;
+	protected svgPath: SVGElement | undefined;
 
-	constructor(map: MaplibreMap | MapboxMap | undefined) {
+    protected exportLayoutOptions: ExportLayoutOptions;
+
+	constructor(map: MaplibreMap | MapboxMap | undefined, exportLayoutOptions: ExportLayoutOptions) {
 		this.map = map;
 		if (this.map === undefined) {
 			return;
 		}
 		this.mapResize = this.mapResize.bind(this);
 		this.map.on('resize', this.mapResize);
+		this.exportLayoutOptions = exportLayoutOptions;
 		const clientWidth = this.map?.getCanvas().clientWidth;
 		const clientHeight = this.map?.getCanvas().clientHeight;
 		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -31,7 +34,7 @@ export default class PrintableAreaManager {
 		svg.setAttribute('width', `${clientWidth}px`);
 		svg.setAttribute('height', `${clientHeight}px`);
 		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-		path.setAttribute('style', 'fill:#888888;stroke-width:0');
+		path.setAttribute('style', 'fill:' + this.exportLayoutOptions.cutoutColor + ';stroke-width:0');
 		path.setAttribute('fill-opacity', '0.5');
 		svg.append(path);
 		this.map?.getCanvasContainer().appendChild(svg);
@@ -50,7 +53,7 @@ export default class PrintableAreaManager {
 		this.generateCutOut();
 	}
 
-	private generateCutOut() {
+	protected generateCutOut() {
 		if (this.map === undefined || this.svgCanvas === undefined || this.svgPath === undefined) {
 			return;
 		}
@@ -87,7 +90,7 @@ export default class PrintableAreaManager {
 	 * @param length mm/inch length
 	 * @param conversionFactor DPI value. default is 96.
 	 */
-	private toPixels(length: number, conversionFactor = 96) {
+	protected toPixels(length: number, conversionFactor = 96) {
 		if (this.unit === Unit.mm) {
 			conversionFactor /= 25.4;
 		}

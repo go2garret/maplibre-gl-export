@@ -1,5 +1,6 @@
 import { type Map as MaplibreMap } from 'maplibre-gl';
 import { type Map as MapboxMap } from 'mapbox-gl';
+import { ExportLayoutOptions } from './interfaces';
 
 export default class CrosshairManager {
 	private map: MaplibreMap | MapboxMap | undefined;
@@ -14,11 +15,14 @@ export default class CrosshairManager {
 
 	private yLine: SVGElement | undefined;
 
-	private color = '#535353';
+	private color: string;
+	
+    protected exportLayoutOptions: ExportLayoutOptions;
 
-	constructor(map: MaplibreMap | MapboxMap | undefined) {
+	constructor(map: MaplibreMap | MapboxMap | undefined, exportLayoutOptions: ExportLayoutOptions ) {
 		this.map = map;
 		this.mapResize = this.mapResize.bind(this);
+		this.color = exportLayoutOptions.crosshairColor ?? "#000000";
 	}
 
 	public create() {
